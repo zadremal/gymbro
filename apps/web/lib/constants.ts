@@ -25,9 +25,9 @@ const PLATE_COLORS: Record<string, string> = {
   '35': '#EAB308',   // yellow
   '25': '#22C55E',   // green
   '15': '#EF4444',   // red (lbs & kg)
-  '10': '#E5E7EB',   // light gray (white)
-  '5':  '#6B7280',   // gray
-  '2.5': '#9CA3AF',  // light gray
+  '10': '#F97316',   // orange
+  '5':  '#8B5CF6',   // violet
+  '2.5': '#EC4899',  // pink
   // kg-only
   '20': '#3B82F6',   // blue
   '1.25': '#D1D5DB', // silver
