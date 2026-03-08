@@ -6,24 +6,34 @@ This file provides context and conventions for AI assistants (Claude Code and si
 
 ## Project Status
 
-**This repository is currently empty and awaiting initial development.**
+**Tech stack selected. Implementation not yet started.**
 
+- Stack decisions are finalized (see Tech Stack section)
 - No source files exist yet
-- No framework, language, or toolchain has been committed
-- This CLAUDE.md will be updated as the project takes shape
+- Update this file as structure and conventions are established
 
 ---
 
 ## Project Overview
 
 **Repository:** `zadremal/gymbro`
-**Purpose:** A fitness/gym companion application ("GymBro")
+**Purpose:** A full-stack fitness/gym companion application ("GymBro")
+**App type:** Full-stack (Next.js frontend + Express API backend, monorepo)
 
-The intended scope, features, and architecture should be defined before beginning implementation. Once established, update this file with:
+---
 
-- Application description and goals
-- Target users and core use cases
-- Tech stack choices and rationale
+## Tech Stack
+
+| Layer | Choice |
+|---|---|
+| **Runtime** | Node.js with TypeScript |
+| **Frontend** | Next.js (React, SSR/SSG) |
+| **Backend** | Express.js |
+| **Database** | PostgreSQL |
+| **ORM** | Drizzle ORM |
+| **Auth** | JWT — stateless access + refresh tokens |
+| **Testing** | Vitest |
+| **Linter/Formatter** | ESLint + Prettier |
 
 ---
 
@@ -31,38 +41,30 @@ The intended scope, features, and architecture should be defined before beginnin
 
 _To be filled in once the project structure is established._
 
-Example structure to aim for (update when real structure is created):
+Expected layout for a Next.js + Express monorepo:
 
 ```
 gymbro/
-├── CLAUDE.md             # This file
-├── README.md             # User-facing documentation
-├── .env.example          # Required environment variables
-├── package.json          # (if Node.js)
-├── src/
-│   ├── index.ts          # Entry point
-│   ├── routes/           # API route handlers
-│   ├── models/           # Data models / DB schemas
-│   ├── services/         # Business logic
-│   └── middleware/       # Auth, validation, etc.
-├── tests/                # Test files mirroring src/ structure
-└── migrations/           # Database migration files
+├── CLAUDE.md                  # This file
+├── README.md                  # User-facing documentation
+├── .env.example               # Required environment variables
+├── package.json               # Root (workspaces)
+├── apps/
+│   ├── web/                   # Next.js frontend
+│   │   ├── app/               # App Router pages and layouts
+│   │   ├── components/        # Shared UI components
+│   │   └── lib/               # Client-side utilities
+│   └── api/                   # Express backend
+│       ├── src/
+│       │   ├── index.ts       # Entry point
+│       │   ├── routes/        # Route handlers
+│       │   ├── middleware/     # Auth, validation, error handling
+│       │   ├── services/      # Business logic
+│       │   └── db/            # Drizzle schema and client
+│       └── drizzle/           # Migration files
+└── packages/
+    └── types/                 # Shared TypeScript types
 ```
-
----
-
-## Tech Stack
-
-_To be confirmed. Update this section after initial setup._
-
-Candidates to evaluate:
-- **Runtime:** Node.js (TypeScript) or Python
-- **Framework:** Express / Fastify / NestJS / FastAPI
-- **Database:** PostgreSQL / SQLite / MongoDB
-- **ORM:** Prisma / Drizzle / SQLAlchemy
-- **Auth:** JWT / session-based / OAuth
-- **Testing:** Jest / Vitest / pytest
-- **Linter/Formatter:** ESLint + Prettier / Ruff
 
 ---
 
@@ -74,19 +76,17 @@ Candidates to evaluate:
 # Clone and install
 git clone <repo-url>
 cd gymbro
-
-# Install dependencies (update command for chosen stack)
-npm install        # Node.js
-# or
-pip install -r requirements.txt  # Python
+npm install
 
 # Copy environment variables
 cp .env.example .env
+# Fill in DATABASE_URL and JWT_SECRET in .env
 
-# Start development server
+# Run database migrations
+npm run db:migrate
+
+# Start development servers (frontend + backend)
 npm run dev
-# or
-python -m uvicorn main:app --reload
 ```
 
 ### Branch Strategy
@@ -118,8 +118,6 @@ docs: update CLAUDE.md with API conventions
 
 ## AI Assistant Instructions
 
-When working on this codebase, AI assistants should:
-
 ### General
 
 - **Read before editing** — always read existing files before modifying them
@@ -130,22 +128,31 @@ When working on this codebase, AI assistants should:
 
 ### Code Style
 
-- Follow the conventions already present in the codebase
-- Match existing indentation (spaces vs. tabs), quote style, and naming conventions
-- Do not add comments to code that is self-explanatory
-- Do not add type annotations to code that was not already typed (unless the task is adding types)
+- TypeScript everywhere — no plain `.js` files in `src/`
+- 2-space indentation, single quotes, trailing commas (Prettier defaults)
+- Named exports preferred over default exports (except Next.js pages/layouts)
+- Do not add comments to self-explanatory code
 
-### Database
+### Database (Drizzle)
 
+- Define schema in `apps/api/src/db/schema.ts`
+- Generate migrations with `npm run db:generate` — never hand-edit generated files
 - Never run destructive migrations without explicit confirmation
-- Always generate migration files rather than mutating the schema directly
-- Check for existing patterns in migration files before writing new ones
+- Always check existing schema patterns before adding new tables/columns
 
-### Testing
+### Auth (JWT)
+
+- Access tokens: short-lived (15 min), sent in `Authorization: Bearer <token>` header
+- Refresh tokens: long-lived (7 days), stored in httpOnly cookies
+- Never log or expose token values
+- Protect routes with the auth middleware in `apps/api/src/middleware/auth.ts`
+
+### Testing (Vitest)
 
 - Write tests for new features when tests already exist in the project
-- Place test files adjacent to source files or in a mirrored `tests/` directory
+- Place test files adjacent to source: `foo.ts` → `foo.test.ts`
 - Do not skip or mock tests to make them pass — fix the underlying issue
+- Run tests with `npm test`
 
 ### Environment & Secrets
 
@@ -163,14 +170,13 @@ When working on this codebase, AI assistants should:
 
 ## Environment Variables
 
-_To be defined. Update this section as variables are introduced._
-
 ```bash
-# .env.example (template — copy to .env and fill in values)
+# .env.example (copy to .env and fill in values)
 NODE_ENV=development
 PORT=3000
 DATABASE_URL=
 JWT_SECRET=
+JWT_REFRESH_SECRET=
 ```
 
 ---
@@ -179,17 +185,15 @@ JWT_SECRET=
 
 _To be defined once routes are established. Update with:_
 
-- Base URL structure (e.g., `/api/v1/...`)
-- Authentication header format
-- Request/response JSON conventions
-- Error response shape
-- Pagination approach
+- Base URL: `/api/v1/...`
+- Auth header: `Authorization: Bearer <access_token>`
+- All responses: `{ data, error, meta }` envelope
+- Error shape: `{ error: { code, message } }`
+- Pagination: cursor-based via `?cursor=<id>&limit=<n>`
 
 ---
 
 ## Testing
-
-_To be defined. Update with:_
 
 ```bash
 # Run all tests
@@ -198,8 +202,8 @@ npm test
 # Run with coverage
 npm run test:coverage
 
-# Run a specific file
-npm test -- src/services/workout.test.ts
+# Run tests for a specific workspace
+npm test --workspace=apps/api
 ```
 
 ---
@@ -212,12 +216,12 @@ _To be defined. Update with deployment target, CI/CD setup, and production check
 
 ## Updating This File
 
-Whenever a significant architectural decision is made, update the relevant section in this file. Specifically:
+Whenever a significant architectural decision is made, update the relevant section:
 
-- After choosing the tech stack → update **Tech Stack**
 - After creating the project structure → update **Repository Structure**
 - After adding environment variables → update **Environment Variables**
 - After defining API patterns → update **API Conventions**
 - After configuring tests → update **Testing**
+- After choosing deployment target → update **Deployment**
 
 Keep this file accurate and current — it is the primary reference for AI assistants working on this project.
