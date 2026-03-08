@@ -27,6 +27,7 @@ This file provides context and conventions for AI assistants (Claude Code and si
 | Layer | Choice |
 |---|---|
 | **Runtime** | Node.js with TypeScript |
+| **Package Manager** | Bun |
 | **Frontend** | Next.js (React, SSR/SSG) |
 | **Backend** | Express.js |
 | **Database** | PostgreSQL |
@@ -34,6 +35,7 @@ This file provides context and conventions for AI assistants (Claude Code and si
 | **Auth** | JWT — stateless access + refresh tokens |
 | **Testing** | Vitest |
 | **Linter/Formatter** | ESLint + Prettier |
+| **Deployment** | Vercel (frontend + API via serverless functions) |
 
 ---
 
@@ -48,7 +50,8 @@ gymbro/
 ├── CLAUDE.md                  # This file
 ├── README.md                  # User-facing documentation
 ├── .env.example               # Required environment variables
-├── package.json               # Root (workspaces)
+├── package.json               # Root (Bun workspaces)
+├── bun.lockb                  # Bun lockfile (commit this)
 ├── apps/
 │   ├── web/                   # Next.js frontend
 │   │   ├── app/               # App Router pages and layouts
@@ -62,8 +65,9 @@ gymbro/
 │       │   ├── services/      # Business logic
 │       │   └── db/            # Drizzle schema and client
 │       └── drizzle/           # Migration files
-└── packages/
-    └── types/                 # Shared TypeScript types
+├── packages/
+│   └── types/                 # Shared TypeScript types
+└── vercel.json                # Vercel monorepo routing config
 ```
 
 ---
@@ -73,20 +77,20 @@ gymbro/
 ### Getting Started
 
 ```bash
-# Clone and install
+# Clone and install (Bun required: https://bun.sh)
 git clone <repo-url>
 cd gymbro
-npm install
+bun install
 
 # Copy environment variables
 cp .env.example .env
 # Fill in DATABASE_URL and JWT_SECRET in .env
 
 # Run database migrations
-npm run db:migrate
+bun run db:migrate
 
 # Start development servers (frontend + backend)
-npm run dev
+bun run dev
 ```
 
 ### Branch Strategy
@@ -136,7 +140,7 @@ docs: update CLAUDE.md with API conventions
 ### Database (Drizzle)
 
 - Define schema in `apps/api/src/db/schema.ts`
-- Generate migrations with `npm run db:generate` — never hand-edit generated files
+- Generate migrations with `bun run db:generate` — never hand-edit generated files
 - Never run destructive migrations without explicit confirmation
 - Always check existing schema patterns before adding new tables/columns
 
@@ -152,13 +156,22 @@ docs: update CLAUDE.md with API conventions
 - Write tests for new features when tests already exist in the project
 - Place test files adjacent to source: `foo.ts` → `foo.test.ts`
 - Do not skip or mock tests to make them pass — fix the underlying issue
-- Run tests with `npm test`
+- Run tests with `bun test`
+
+### Package Management (Bun)
+
+- Always use `bun` — never `npm`, `yarn`, or `pnpm`
+- Add a dependency: `bun add <package>` / `bun add -d <package>` for dev deps
+- Run scripts: `bun run <script>`
+- Commit `bun.lockb` — it is a binary lockfile and must be version-controlled
+- Do not commit `node_modules/`
 
 ### Environment & Secrets
 
 - Never hardcode secrets, API keys, or credentials
 - Use environment variables for all configuration
 - Add new variables to `.env.example` (without values) when introducing them
+- On Vercel, set all production env vars via the Vercel dashboard (not committed files)
 
 ### Git
 
@@ -197,20 +210,76 @@ _To be defined once routes are established. Update with:_
 
 ```bash
 # Run all tests
-npm test
+bun test
 
 # Run with coverage
-npm run test:coverage
+bun run test:coverage
 
 # Run tests for a specific workspace
-npm test --workspace=apps/api
+bun test --cwd apps/api
 ```
 
 ---
 
 ## Deployment
 
-_To be defined. Update with deployment target, CI/CD setup, and production checklist._
+**Target:** Vercel
+
+### Architecture on Vercel
+
+- `apps/web` (Next.js) — deployed as a standard Vercel project with automatic SSR/SSG support
+- `apps/api` (Express) — deployed as Vercel Serverless Functions via an `api/` directory or adapter
+- Both are configured through `vercel.json` at the repo root for monorepo routing
+
+### vercel.json (root)
+
+```json
+{
+  "buildCommand": "bun run build",
+  "installCommand": "bun install",
+  "framework": null,
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": "/apps/api/src/index.ts" }
+  ]
+}
+```
+
+### Environment Variables on Vercel
+
+Set these in the Vercel dashboard under **Project → Settings → Environment Variables**:
+
+| Variable | Environments |
+|---|---|
+| `DATABASE_URL` | Production, Preview |
+| `JWT_SECRET` | Production, Preview |
+| `JWT_REFRESH_SECRET` | Production, Preview |
+| `NODE_ENV` | Production → `production` |
+
+Never commit production secrets to the repo.
+
+### Deploying
+
+```bash
+# Install Vercel CLI (once)
+bun add -g vercel
+
+# Link project (once)
+vercel link
+
+# Deploy to preview
+vercel
+
+# Deploy to production
+vercel --prod
+```
+
+### CI/CD
+
+Vercel auto-deploys on push:
+- Push to `main` → production deployment
+- Push to any other branch → preview deployment (unique URL per branch)
+
+No additional CI configuration is required for basic deployments.
 
 ---
 
