@@ -33,6 +33,9 @@ This file provides context and conventions for AI assistants (Claude Code and si
 | **Database** | PostgreSQL |
 | **ORM** | Drizzle ORM |
 | **Auth** | JWT — stateless access + refresh tokens |
+| **Schema / Validation** | Zod + zod-to-openapi (shared frontend + backend) |
+| **API Contract** | OpenAPI 3.1 spec generated from Zod schemas |
+| **Frontend API Client** | openapi-fetch (type-safe, generated from spec) |
 | **Testing** | Vitest |
 | **Linter/Formatter** | ESLint + Prettier |
 | **Deployment** | Vercel (frontend + API via serverless functions) |
@@ -41,34 +44,64 @@ This file provides context and conventions for AI assistants (Claude Code and si
 
 ## Repository Structure
 
-_To be filled in once the project structure is established._
-
-Expected layout for a Next.js + Express monorepo:
+Monorepo using Bun workspaces. Frontend follows **Atomic Design**. Shared schemas are the source of truth for OpenAPI + validation.
 
 ```
 gymbro/
-├── CLAUDE.md                  # This file
-├── README.md                  # User-facing documentation
-├── .env.example               # Required environment variables
-├── package.json               # Root (Bun workspaces)
-├── bun.lockb                  # Bun lockfile (commit this)
-├── apps/
-│   ├── web/                   # Next.js frontend
-│   │   ├── app/               # App Router pages and layouts
-│   │   ├── components/        # Shared UI components
-│   │   └── lib/               # Client-side utilities
-│   └── api/                   # Express backend
-│       ├── src/
-│       │   ├── index.ts       # Entry point
-│       │   ├── routes/        # Route handlers
-│       │   ├── middleware/     # Auth, validation, error handling
-│       │   ├── services/      # Business logic
-│       │   └── db/            # Drizzle schema and client
-│       └── drizzle/           # Migration files
+├── CLAUDE.md                       # This file
+├── README.md                       # User-facing documentation
+├── .env.example                    # Required environment variables
+├── package.json                    # Root (Bun workspaces)
+├── bun.lockb                       # Bun lockfile (commit this)
+├── vercel.json                     # Vercel monorepo routing config
+│
 ├── packages/
-│   └── types/                 # Shared TypeScript types
-└── vercel.json                # Vercel monorepo routing config
+│   └── schemas/                    # Zod schemas — single source of truth
+│       ├── src/
+│       │   ├── auth.schema.ts      # Auth request/response schemas
+│       │   ├── workout.schema.ts   # Workout schemas
+│       │   ├── user.schema.ts      # User schemas
+│       │   └── index.ts            # Re-exports all schemas
+│       └── openapi.ts              # Generated OpenAPI spec (via zod-to-openapi)
+│
+├── apps/
+│   ├── web/                        # Next.js frontend
+│   │   ├── app/                    # App Router — pages and layouts only
+│   │   ├── components/
+│   │   │   ├── atoms/              # Smallest units: Button, Input, Label, Badge, Avatar
+│   │   │   ├── molecules/          # Composed atoms: FormField, SearchBar, StatCard
+│   │   │   ├── organisms/          # Complex sections: Navbar, WorkoutForm, ExerciseList
+│   │   │   ├── templates/          # Page layouts: DashboardTemplate, AuthTemplate
+│   │   │   └── providers/          # React context providers
+│   │   └── lib/
+│   │       ├── api-client.ts       # Type-safe fetch client (openapi-fetch)
+│   │       └── utils.ts
+│   │
+│   └── api/                        # Express backend
+│       ├── src/
+│       │   ├── index.ts            # Entry point
+│       │   ├── routes/             # Route handlers (one file per resource)
+│       │   ├── middleware/
+│       │   │   ├── auth.ts         # JWT verification
+│       │   │   └── validate.ts     # Zod request validation middleware
+│       │   ├── services/           # Business logic
+│       │   └── db/                 # Drizzle schema and client
+│       └── drizzle/                # Migration files
 ```
+
+### Atomic Design Rules
+
+| Level | Contents | Examples |
+|---|---|---|
+| **atoms** | Single-purpose, no business logic | `Button`, `Input`, `Label`, `Badge`, `Spinner` |
+| **molecules** | 2–5 atoms combined, one responsibility | `FormField`, `SearchBar`, `WorkoutStatCard` |
+| **organisms** | Feature-level sections, may fetch data | `Navbar`, `WorkoutForm`, `ExerciseTable` |
+| **templates** | Layout shells, no data | `DashboardTemplate`, `AuthTemplate` |
+| **app/** | Next.js pages — wire templates + organisms | `app/dashboard/page.tsx` |
+
+- Atoms and molecules must be purely presentational (no API calls, no direct store access)
+- Organisms may be connected to state/data
+- Templates define layout only — no business logic, no hardcoded content
 
 ---
 
@@ -137,6 +170,22 @@ docs: update CLAUDE.md with API conventions
 - Named exports preferred over default exports (except Next.js pages/layouts)
 - Do not add comments to self-explanatory code
 
+### Schemas & Validation
+
+- All request/response shapes must have a Zod schema in `packages/schemas`
+- Never define inline types for API data — always derive with `z.infer<typeof Schema>`
+- Never skip validation on the backend — every route handler must use the `validate` middleware
+- Never skip validation on the frontend — form submissions and API responses must be parsed with Zod
+- After adding a schema, regenerate the OpenAPI spec: `bun run openapi:generate`
+- Do not hand-edit `openapi.ts` — it is generated output
+
+### Atomic Design
+
+- Place new components in the correct atomic level — see the table in Repository Structure
+- Atoms and molecules must be purely presentational (no API calls, no store access)
+- Organisms may connect to data/state
+- New pages in `app/` should compose a template + organisms, not contain UI markup directly
+
 ### Database (Drizzle)
 
 - Define schema in `apps/api/src/db/schema.ts`
@@ -196,13 +245,76 @@ JWT_REFRESH_SECRET=
 
 ## API Conventions
 
-_To be defined once routes are established. Update with:_
+### Overview
 
 - Base URL: `/api/v1/...`
 - Auth header: `Authorization: Bearer <access_token>`
-- All responses: `{ data, error, meta }` envelope
-- Error shape: `{ error: { code, message } }`
-- Pagination: cursor-based via `?cursor=<id>&limit=<n>`
+- All responses use a consistent envelope (see below)
+- Validation runs on **both ends** from the same Zod schemas in `packages/schemas`
+
+### Schema-First Workflow
+
+Zod schemas in `packages/schemas` are the single source of truth:
+
+```
+Zod schema (packages/schemas)
+  ├── Backend: validate requests via middleware (zod.parse)
+  ├── Frontend: validate forms + API responses (zod.parse / zod.safeParse)
+  └── OpenAPI spec: generated via zod-to-openapi → consumed by openapi-fetch
+```
+
+1. **Define** the schema in `packages/schemas/src/<resource>.schema.ts`
+2. **Register** it in `openapi.ts` to update the generated spec
+3. **Backend** — use the `validate` middleware to parse `req.body` / `req.query`
+4. **Frontend** — use `openapi-fetch` client for type-safe calls; validate forms with the same schema
+
+### Schema Example
+
+```ts
+// packages/schemas/src/workout.schema.ts
+import { z } from 'zod'
+import { extendZodWithOpenApi } from '@asteasolutions/zod-to-openapi'
+
+extendZodWithOpenApi(z)
+
+export const CreateWorkoutSchema = z.object({
+  name: z.string().min(1).max(100).openapi({ example: 'Leg Day' }),
+  notes: z.string().max(500).optional(),
+}).openapi('CreateWorkout')
+
+export type CreateWorkout = z.infer<typeof CreateWorkoutSchema>
+```
+
+### Response Envelope
+
+```ts
+// Success
+{ "data": { ... }, "meta": { "cursor": "..." } }
+
+// Error
+{ "error": { "code": "VALIDATION_ERROR", "message": "...", "details": [...] } }
+```
+
+### Validation Middleware (Backend)
+
+```ts
+// Automatically returns 400 with structured error if schema fails
+router.post('/workouts', validate({ body: CreateWorkoutSchema }), handler)
+```
+
+### Frontend API Client
+
+```ts
+// lib/api-client.ts — generated types from OpenAPI spec
+import createClient from 'openapi-fetch'
+import type { paths } from '@gymbro/schemas/openapi'
+
+export const api = createClient<paths>({ baseUrl: '/api/v1' })
+```
+
+### Pagination
+
+Cursor-based: `GET /api/v1/workouts?cursor=<id>&limit=20`
 
 ---
 
