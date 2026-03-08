@@ -18,12 +18,12 @@ export function PlateChip({ weight, unit, selected, onToggle }: PlateChipProps) 
         'w-16 h-16 rounded-xl font-bold text-sm transition-all duration-200 cursor-pointer',
         selected
           ? 'text-white shadow-lg scale-105'
-          : 'text-gray-500 hover:text-gray-300',
+          : 'text-white/80 hover:text-white',
       ].join(' ')}
       style={
         selected
           ? { backgroundColor: color, boxShadow: `0 4px 20px ${color}50`, border: `1px solid ${color}` }
-          : { backgroundColor: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }
+          : { backgroundColor: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.2)' }
       }
     >
       <span className="text-base font-extrabold leading-none">{weight}</span>

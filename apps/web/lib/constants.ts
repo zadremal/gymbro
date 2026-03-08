@@ -1,6 +1,6 @@
 import type { Unit } from '@gymbro/schemas'
 
-export const DEFAULT_PLATES_LBS = [45, 35, 25, 10, 5, 2.5]
+export const DEFAULT_PLATES_LBS = [45, 35, 25, 15, 10, 5, 2.5]
 export const DEFAULT_PLATES_KG = [25, 20, 15, 10, 5, 2.5, 1.25]
 
 export const DEFAULT_BARBELL_LBS = 45
@@ -24,12 +24,12 @@ const PLATE_COLORS: Record<string, string> = {
   '45': '#3B82F6',   // blue
   '35': '#EAB308',   // yellow
   '25': '#22C55E',   // green
+  '15': '#EF4444',   // red (lbs & kg)
   '10': '#E5E7EB',   // light gray (white)
   '5':  '#6B7280',   // gray
   '2.5': '#9CA3AF',  // light gray
-  // kg
+  // kg-only
   '20': '#3B82F6',   // blue
-  '15': '#EAB308',   // yellow
   '1.25': '#D1D5DB', // silver
 }
 
