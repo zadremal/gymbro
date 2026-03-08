@@ -14,7 +14,7 @@ export const SessionInputSchema = z.object({
   unit: UnitSchema,
   barbellWeight: z.number().positive(),
   availablePlates: z.array(z.number().positive()),
-  targets: z.array(ExerciseTargetSchema).min(1).max(5),
+  targets: z.array(ExerciseTargetSchema).min(1).max(25),
 })
 export type SessionInput = z.infer<typeof SessionInputSchema>
 

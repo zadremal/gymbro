@@ -15,12 +15,16 @@ export function PlateChip({ weight, unit, selected, onToggle }: PlateChipProps) 
       onClick={onToggle}
       className={[
         'relative flex flex-col items-center justify-center',
-        'w-16 h-16 rounded-lg border-2 font-bold text-sm transition-all duration-150 cursor-pointer',
+        'w-16 h-16 rounded-xl font-bold text-sm transition-all duration-200 cursor-pointer',
         selected
-          ? 'border-transparent text-white shadow-lg scale-105'
-          : 'border-gray-700 text-gray-500 bg-gray-800/50 hover:border-gray-500',
+          ? 'text-white shadow-lg scale-105'
+          : 'text-gray-500 hover:text-gray-300',
       ].join(' ')}
-      style={selected ? { backgroundColor: color, boxShadow: `0 0 12px ${color}60` } : undefined}
+      style={
+        selected
+          ? { backgroundColor: color, boxShadow: `0 4px 20px ${color}50`, border: `1px solid ${color}` }
+          : { backgroundColor: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }
+      }
     >
       <span className="text-base font-extrabold leading-none">{weight}</span>
       <span className="text-[10px] font-medium opacity-80 mt-0.5">{unit}</span>

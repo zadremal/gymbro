@@ -19,10 +19,10 @@ export function ResultsView({ result, unit, barbellWeight }: ResultsViewProps) {
   return (
     <div className="flex flex-col gap-0">
       <div className="flex items-center gap-3 mb-4">
-        <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-widest">
+        <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-widest">
           Session Plan
         </h2>
-        <span className="text-xs text-gray-600">
+        <span className="text-xs text-gray-700">
           Sorted lightest → heaviest to minimize plate swaps
         </span>
       </div>
@@ -39,13 +39,14 @@ export function ResultsView({ result, unit, barbellWeight }: ResultsViewProps) {
             )}
 
             <div
-              className={[
-                'bg-gray-900 rounded-2xl border p-5',
-                cfg.feasible ? 'border-gray-800' : 'border-red-900',
-              ].join(' ')}
+              className="rounded-2xl border p-5"
+              style={{
+                backgroundColor: 'rgba(255,255,255,0.02)',
+                borderColor: cfg.feasible ? 'rgba(255,255,255,0.07)' : 'rgba(239,68,68,0.3)',
+              }}
             >
               {isFirst && (
-                <div className="inline-flex items-center gap-1.5 bg-orange-500/10 border border-orange-500/30 text-orange-400 text-[10px] font-semibold uppercase tracking-widest px-2.5 py-1 rounded-full mb-3">
+                <div className="inline-flex items-center gap-1.5 text-orange-400 text-[10px] font-semibold uppercase tracking-widest px-2.5 py-1 rounded-full mb-3" style={{ background: 'rgba(249,115,22,0.1)', border: '1px solid rgba(249,115,22,0.25)' }}>
                   <span className="w-1.5 h-1.5 bg-orange-400 rounded-full" />
                   Start here
                 </div>
@@ -69,7 +70,7 @@ export function ResultsView({ result, unit, barbellWeight }: ResultsViewProps) {
                 </div>
 
                 {cfg.addOnly && (
-                  <div className="flex items-center gap-1.5 bg-green-500/10 border border-green-500/30 text-green-400 text-[10px] font-semibold uppercase tracking-widest px-2.5 py-1 rounded-full whitespace-nowrap">
+                  <div className="flex items-center gap-1.5 text-green-400 text-[10px] font-semibold uppercase tracking-widest px-2.5 py-1 rounded-full whitespace-nowrap" style={{ background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.25)' }}>
                     <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                     </svg>

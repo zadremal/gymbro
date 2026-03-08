@@ -33,12 +33,12 @@ export function SwapIndicator({ transition, unit }: SwapIndicatorProps) {
       />
 
       <div
-        className={[
-          'flex flex-col gap-1.5 px-4 py-2.5 rounded-xl border text-xs w-full max-w-sm',
+        className="flex flex-col gap-1.5 px-4 py-2.5 rounded-xl text-xs w-full max-w-sm"
+        style={
           isAddOnly
-            ? 'border-green-800 bg-green-950/60'
-            : 'border-amber-800 bg-amber-950/40',
-        ].join(' ')}
+            ? { border: '1px solid rgba(34,197,94,0.2)', background: 'rgba(34,197,94,0.05)' }
+            : { border: '1px solid rgba(245,158,11,0.2)', background: 'rgba(245,158,11,0.05)' }
+        }
       >
         {remove.length > 0 && (
           <div className="flex items-center gap-2 flex-wrap">

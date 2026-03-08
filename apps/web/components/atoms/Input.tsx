@@ -17,12 +17,12 @@ export function Input({ label, error, className = '', id, ...props }: InputProps
         id={id}
         {...props}
         className={[
-          'bg-gray-800 border rounded-lg px-3 py-2 text-white text-sm',
-          'placeholder-gray-500 outline-none',
-          'transition-colors duration-150',
+          'border rounded-xl px-3 py-2 text-white text-sm min-h-[40px]',
+          'placeholder-gray-600 outline-none',
+          'transition-all duration-200',
           error
-            ? 'border-red-500 focus:border-red-400'
-            : 'border-gray-700 focus:border-orange-500',
+            ? 'border-red-500/60 focus:border-red-400 bg-red-950/20'
+            : 'border-white/[0.08] focus:border-orange-500/60 bg-white/[0.05] focus:bg-white/[0.07]',
           className,
         ].join(' ')}
       />

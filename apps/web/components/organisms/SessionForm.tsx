@@ -5,7 +5,7 @@ import type { Unit } from '@gymbro/schemas'
 export interface ExerciseRow {
   id: string
   name: string
-  weightStr: string
+  weights: string[]
 }
 
 interface SessionFormProps {
@@ -23,7 +23,7 @@ export function SessionForm({ exercises, unit, onChange }: SessionFormProps) {
     if (exercises.length >= 5) return
     onChange([
       ...exercises,
-      { id: crypto.randomUUID(), name: '', weightStr: '' },
+      { id: crypto.randomUUID(), name: '', weights: [''] },
     ])
   }
 
@@ -32,8 +32,8 @@ export function SessionForm({ exercises, unit, onChange }: SessionFormProps) {
   }
 
   return (
-    <section className="bg-gray-900 rounded-2xl p-5 border border-gray-800">
-      <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-widest mb-4">
+    <section className="rounded-2xl p-5 border border-white/[0.07] bg-white/[0.02]">
+      <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-widest mb-4">
         Session Weights
       </h2>
 
@@ -43,10 +43,10 @@ export function SessionForm({ exercises, unit, onChange }: SessionFormProps) {
             key={ex.id}
             index={i}
             name={ex.name}
-            weightStr={ex.weightStr}
+            weights={ex.weights}
             unit={unit}
             onNameChange={(v) => updateRow(ex.id, { name: v })}
-            onWeightChange={(v) => updateRow(ex.id, { weightStr: v })}
+            onWeightsChange={(v) => updateRow(ex.id, { weights: v })}
             onRemove={() => removeRow(ex.id)}
             showRemove={exercises.length > 1}
           />
@@ -54,7 +54,7 @@ export function SessionForm({ exercises, unit, onChange }: SessionFormProps) {
       </div>
 
       {exercises.length < 5 && (
-        <Button variant="ghost" size="sm" onClick={addRow} className="text-gray-400 hover:text-white">
+        <Button variant="ghost" size="sm" onClick={addRow} className="text-gray-500 hover:text-white min-h-[44px]">
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
           </svg>
@@ -63,7 +63,7 @@ export function SessionForm({ exercises, unit, onChange }: SessionFormProps) {
       )}
 
       {exercises.length === 5 && (
-        <p className="text-xs text-gray-600 mt-1">Maximum 5 exercises per session</p>
+        <p className="text-xs text-gray-700 mt-1">Maximum 5 exercises per session</p>
       )}
     </section>
   )

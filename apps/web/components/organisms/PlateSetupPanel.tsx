@@ -29,8 +29,8 @@ export function PlateSetupPanel({
   }
 
   return (
-    <section className="bg-gray-900 rounded-2xl p-5 border border-gray-800">
-      <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-widest mb-4">
+    <section className="rounded-2xl p-5 border border-white/[0.07] bg-white/[0.02]">
+      <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-widest mb-4">
         Available Plates
       </h2>
 
@@ -47,7 +47,7 @@ export function PlateSetupPanel({
       </div>
 
       <div>
-        <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-2">
+        <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">
           Barbell Weight
         </p>
         <div className="flex gap-2 flex-wrap">
@@ -56,11 +56,16 @@ export function PlateSetupPanel({
               key={opt.value}
               onClick={() => onBarbellChange(opt.value)}
               className={[
-                'px-3 py-1.5 rounded-lg text-sm font-medium transition-colors duration-150 cursor-pointer',
+                'px-3 py-2 rounded-xl text-sm font-semibold transition-all duration-200 cursor-pointer min-h-[40px]',
                 barbellWeight === opt.value
-                  ? 'bg-orange-500 text-white'
-                  : 'bg-gray-800 text-gray-400 hover:bg-gray-700 hover:text-white border border-gray-700',
+                  ? 'text-white shadow-lg'
+                  : 'text-gray-400 hover:text-white border border-white/[0.08] bg-white/[0.04] hover:bg-white/[0.08]',
               ].join(' ')}
+              style={
+                barbellWeight === opt.value
+                  ? { background: 'linear-gradient(135deg, #f97316, #ea580c)' }
+                  : undefined
+              }
             >
               {opt.label}
             </button>

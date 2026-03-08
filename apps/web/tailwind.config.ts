@@ -7,9 +7,12 @@ const config: Config = {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        sans: ['var(--font-inter)', 'system-ui', 'sans-serif'],
+      },
       colors: {
         gray: {
-          950: '#0a0a0f',
+          950: '#0a0a10',
         },
       },
     },
